@@ -9,12 +9,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/mehdiseddik.com/pkg/handlers"
 	"github.com/mehdiseddik.com/pkg/middlewares"
-	"github.com/mehdiseddik.com/pkg/services/filemanager"
 )
 
 func main() {
 	app := fiber.New()
-	go filemanager.WatchDir()
 
 	app.Use("/ws", middlewares.WebsocketMiddleware)
 	app.Use(logger.New())
@@ -31,7 +29,11 @@ func main() {
 
 	app.Get("/ws/arborescence", websocket.New(handlers.Arborescence))
 
-	app.Post("/api/create", handlers.CreateFile)
+	app.Post("/api/file", handlers.CreateFileHandler)
+	app.Put("/api/file/:fileId", handlers.UpdateFileHandler)
+
+	app.Post("/api/folder", handlers.CreateFolderHandler)
+	// app.Put("/api/folder", handlers.UpdateFolderHandler)
 
 	log.Fatal(app.Listen(":3000"))
 }
