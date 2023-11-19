@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/kr/pretty"
 	"github.com/mehdiseddik.com/pkg/models"
 )
 
@@ -45,8 +44,20 @@ func CreateFile(name string, parentFolderId string) (*models.File, error) {
 	return newFile, nil
 }
 
+func FindFileById(id string) (*models.File, error) {
+	found, error := RootFolder.FindFileById(id)
+	if error != nil {
+		fmt.Println(error)
+		return nil, error
+	}
+	return found, nil
+}
+
 func UpdateFileName(id string, name string) (*models.File, error) {
-	foundFile := RootFolder.FindFileById(id)
+	foundFile, err := RootFolder.FindFileById(id)
+	if err != nil {
+		return nil, err
+	}
 	parentFolder := RootFolder.GetFileParentFolder(id)
 	if foundFile == nil {
 		return nil, errors.New("file not found")
@@ -91,7 +102,10 @@ func CreateFolder(name string, parentFolderId string) (*models.Folder, error) {
 }
 
 func MoveFile(fileId string, folderId string) (*models.File, error) {
-	foundFile := RootFolder.FindFileById(fileId)
+	foundFile, err := RootFolder.FindFileById(fileId)
+	if err != nil {
+		return nil, err
+	}
 	if foundFile == nil {
 		return nil, errors.New("file not found")
 	}
@@ -104,9 +118,8 @@ func MoveFile(fileId string, folderId string) (*models.File, error) {
 	oldParentFolder := RootFolder.GetFileParentFolder(fileId)
 
 	fmt.Print("Parent folder of the file " + foundFile.Name + " is " + oldParentFolder.Name)
-	pretty.Println(oldParentFolder)
 	foundFolder.AddFile(foundFile)
-	err := oldParentFolder.RemoveFile(foundFile.Id) // probleme
+	err = oldParentFolder.RemoveFile(foundFile.Id) // probleme
 	if err != nil {
 		return nil, err
 	}

@@ -24,20 +24,23 @@ func (f *Folder) AddSubDir(folder *Folder) *Folder {
 	return f
 }
 
-func (f *Folder) FindFileById(id string) *File {
+func (f *Folder) FindFileById(id string) (*File, error) {
 
 	for _, file := range f.Files {
 		if file.Id == id {
-			return file
+			return file, nil
 		}
 	}
 	for _, folder := range f.SubDirs {
-		found := folder.FindFileById(id)
+		found, err := folder.FindFileById(id)
+		if err != nil {
+			return nil, err
+		}
 		if found != nil {
-			return found
+			return found, nil
 		}
 	}
-	return nil
+	return nil, errors.New("file not found")
 }
 
 func (f *Folder) FindFolderById(id string) *Folder {

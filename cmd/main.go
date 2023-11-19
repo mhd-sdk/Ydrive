@@ -27,11 +27,11 @@ func main() {
 		Output: file,
 	}))
 
-	app.Get("/ws/arborescence", websocket.New(handlers.Arborescence))
+	app.Get("/ws/arborescence", websocket.New(handlers.ArborescenceWsHandler))
+	app.Get("/ws/file/:fileId", websocket.New(handlers.WriteFileContentWsHandler))
 
 	app.Post("/api/file", handlers.CreateFileHandler)
 	app.Post("/api/file/move", handlers.MoveFileHandler)
-
 	app.Put("/api/file/:fileId", handlers.EditFileNameHandler)
 	app.Delete("/api/file/:fileId", handlers.DeleteFileHandler)
 

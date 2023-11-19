@@ -6,39 +6,29 @@ import (
 )
 
 // fiber websocket mamager
-var Clients = make(map[*websocket.Conn]bool)
+var ArborescenceClients = make(map[*websocket.Conn]bool)
 
-// Register a new client
-func Register(c *websocket.Conn) {
-	Clients[c] = true
+// RegisterArborescence a new client
+func RegisterArborescence(c *websocket.Conn) {
+	ArborescenceClients[c] = true
 }
 
-// Unregister a client
-func Unregister(c *websocket.Conn) {
+// UnregisterArborescence a client
+func UnregisterArborescence(c *websocket.Conn) {
 	c.Close()
-	delete(Clients, c)
+	delete(ArborescenceClients, c)
 }
 
-// Broadcast a message to all clients
-func Broadcast(message interface{}) {
-	for client := range Clients {
+// arborescenceBroadCast a message to all clients
+func arborescenceBroadCast(message interface{}) {
+	for client := range ArborescenceClients {
 		client.WriteJSON(message)
 	}
 }
 
-// Send a message to a specific client
-func Send(c *websocket.Conn, message []byte) {
-	c.WriteMessage(1, message)
-}
-
-// Send a message to a specific client
-func SendJSON(c *websocket.Conn, message interface{}) {
-	c.WriteJSON(message)
-}
-
-func Arborescence(c *websocket.Conn) {
-	defer Unregister(c)
-	Register(c)
+func ArborescenceWsHandler(c *websocket.Conn) {
+	defer UnregisterArborescence(c)
+	RegisterArborescence(c)
 	c.WriteJSON(filesystemmanager.RootFolder)
 	for {
 		// when receive a message from client, broadcast to all clients
