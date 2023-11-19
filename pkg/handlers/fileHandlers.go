@@ -27,7 +27,7 @@ func CreateFileHandler(c *fiber.Ctx) error {
 		c.Status(400)
 		return c.JSON(fiber.Map{"error": err.Error()})
 	}
-	Broadcast(filesystemmanager.CurrentFolder)
+	Broadcast(filesystemmanager.RootFolder)
 	returned := fiber.Map{
 		"createdFile": created,
 		"msg":         "file created successfully",
@@ -46,7 +46,7 @@ func TestHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"msg": param})
 }
 
-func UpdateFileHandler(c *fiber.Ctx) error {
+func EditFileNameHandler(c *fiber.Ctx) error {
 	fileId := c.Params("fileId")
 	var body EditFileRequest
 	err := c.BodyParser(&body)
@@ -54,15 +54,57 @@ func UpdateFileHandler(c *fiber.Ctx) error {
 		return err
 	}
 	fileName := body.Name
-	edited, err := filesystemmanager.UpdateFile(fileId, fileName)
+	edited, err := filesystemmanager.UpdateFileName(fileId, fileName)
 	if err != nil {
 		c.Status(400)
 		return c.JSON(fiber.Map{"error": err.Error()})
 	}
-	Broadcast(filesystemmanager.CurrentFolder)
+	Broadcast(filesystemmanager.RootFolder)
 	returned := fiber.Map{
 		"editedFile": edited,
 		"msg":        "file edited successfully",
+	}
+	c.Status(200)
+	return c.JSON(returned)
+}
+
+type MoveFileRequest struct {
+	FileId   string `json:"fileId"`
+	FolderId string `json:"folderId"`
+}
+
+func MoveFileHandler(c *fiber.Ctx) error {
+	var body MoveFileRequest
+	err := c.BodyParser(&body)
+	if err != nil {
+		return err
+	}
+	fileId := body.FileId
+	folderId := body.FolderId
+	moved, err := filesystemmanager.MoveFile(fileId, folderId)
+	if err != nil {
+		c.Status(400)
+		return c.JSON(fiber.Map{"error": err.Error()})
+	}
+	Broadcast(filesystemmanager.RootFolder)
+	returned := fiber.Map{
+		"movedFile": moved,
+		"msg":       "file moved successfully",
+	}
+	c.Status(200)
+	return c.JSON(returned)
+}
+
+func DeleteFileHandler(c *fiber.Ctx) error {
+	fileId := c.Params("fileId")
+	err := filesystemmanager.RootFolder.RemoveFile(fileId)
+	if err != nil {
+		c.Status(400)
+		return c.JSON(fiber.Map{"error": err.Error()})
+	}
+	Broadcast(filesystemmanager.RootFolder)
+	returned := fiber.Map{
+		"msg": "file deleted successfully",
 	}
 	c.Status(200)
 	return c.JSON(returned)

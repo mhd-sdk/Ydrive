@@ -29,7 +29,33 @@ func CreateFolderHandler(c *fiber.Ctx) error {
 		"createdFolder": created,
 		"msg":           "folder created successfully",
 	}
-	Broadcast(filesystemmanager.CurrentFolder)
+	Broadcast(filesystemmanager.RootFolder)
 	c.Status(201)
+	return c.JSON(returned)
+}
+
+type EditFolderNameRequest struct {
+	Name string `json:"name"`
+}
+
+func EditFolderNameHandler(c *fiber.Ctx) error {
+	folderId := c.Params("folderId")
+	var body EditFolderNameRequest
+	err := c.BodyParser(&body)
+	if err != nil {
+		return err
+	}
+	folderName := body.Name
+	edited, err := filesystemmanager.UpdateFolderName(folderId, folderName)
+	if err != nil {
+		c.Status(400)
+		return c.JSON(fiber.Map{"error": err.Error()})
+	}
+	Broadcast(filesystemmanager.RootFolder)
+	returned := fiber.Map{
+		"editedFile": edited,
+		"msg":        "file edited successfully",
+	}
+	c.Status(200)
 	return c.JSON(returned)
 }

@@ -1,6 +1,6 @@
 package models
 
-import "github.com/kr/pretty"
+import "errors"
 
 type Folder struct {
 	Name    string    `json:"name"`
@@ -14,6 +14,11 @@ func (f *Folder) AddFile(file *File) *Folder {
 	return f
 }
 
+func (f *Folder) SetName(name string) *Folder {
+	f.Name = name
+	return f
+}
+
 func (f *Folder) AddSubDir(folder *Folder) *Folder {
 	f.SubDirs = append(f.SubDirs, folder)
 	return f
@@ -22,14 +27,25 @@ func (f *Folder) AddSubDir(folder *Folder) *Folder {
 func (f *Folder) FindFileById(id string) *File {
 
 	for _, file := range f.Files {
-		pretty.Println(file.Id, id)
-		pretty.Println(file.Id == id)
 		if file.Id == id {
 			return file
 		}
 	}
 	for _, folder := range f.SubDirs {
 		found := folder.FindFileById(id)
+		if found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
+func (f *Folder) FindFolderById(id string) *Folder {
+	if f.Id == id {
+		return f
+	}
+	for _, folder := range f.SubDirs {
+		found := folder.FindFolderById(id)
 		if found != nil {
 			return found
 		}
@@ -48,14 +64,14 @@ func (f *Folder) GetSubDir(id string) *Folder {
 }
 
 // remove the file with the given id from the files of the current folder
-func (f *Folder) RemoveFile(id string) *Folder {
+func (f *Folder) RemoveFile(id string) error {
 	for i, file := range f.Files {
 		if file.Id == id {
 			f.Files = append(f.Files[:i], f.Files[i+1:]...)
-			return f
+			return nil
 		}
 	}
-	return f
+	return errors.New("file not found&&&")
 }
 
 // remove the subfolder with the given id from the subfolders of the current folder
@@ -84,14 +100,32 @@ func (f *Folder) CheckDuplicateName(name string) bool {
 	return false
 }
 
-// Return the parent folder of the file with the given id
-func (f *Folder) GetParentFolder(fileId string) *Folder {
-	file := f.FindFileById(fileId)
-	if file != nil {
+// Return the folder that contains the file with the given id
+func (f *Folder) GetFileParentFolder(fileId string) *Folder {
+
+	for _, file := range f.Files {
+		if file.Id == fileId {
+			return f
+		}
+	}
+	for _, folder := range f.SubDirs {
+		found := folder.GetFileParentFolder(fileId)
+		if found != nil {
+			return found
+		}
+	}
+	return nil
+
+}
+
+// Return the parent folder of the folder with the given id
+func (f *Folder) GetFolderParentFolder(folderId string) *Folder {
+	folder := f.FindFolderById(folderId)
+	if folder != nil {
 		return f
 	}
 	for _, folder := range f.SubDirs {
-		found := folder.GetParentFolder(fileId)
+		found := folder.GetFolderParentFolder(folderId)
 		if found != nil {
 			return found
 		}

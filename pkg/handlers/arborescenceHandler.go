@@ -39,7 +39,13 @@ func SendJSON(c *websocket.Conn, message interface{}) {
 func Arborescence(c *websocket.Conn) {
 	defer Unregister(c)
 	Register(c)
-	c.WriteJSON(filesystemmanager.CurrentFolder)
+	c.WriteJSON(filesystemmanager.RootFolder)
 	for {
+		// when receive a message from client, broadcast to all clients
+		_, _, err := c.ReadMessage()
+		if err != nil {
+			return
+		}
+		c.WriteJSON(filesystemmanager.RootFolder)
 	}
 }
