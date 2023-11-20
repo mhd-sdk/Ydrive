@@ -6,6 +6,11 @@ type File struct {
 	Content string `json:"content"`
 }
 
+type FileWithoutContent struct {
+	Name string `json:"name"`
+	Id   string `json:"id"`
+}
+
 func (f *File) SetContent(content string) *File {
 	f.Content = content
 	return f

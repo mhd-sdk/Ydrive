@@ -9,6 +9,39 @@ type Folder struct {
 	SubDirs []*Folder `json:"subDirs"`
 }
 
+func (folder *Folder) ToFolderWithoutFileContent() FolderWithoutFileContent {
+	// Convert files to FileWithoutContent
+	filesWithoutContent := make([]*FileWithoutContent, 0, len(folder.Files))
+	for _, file := range folder.Files {
+		fileWithoutContent := &FileWithoutContent{
+			Name: file.Name,
+			Id:   file.Id,
+		}
+		filesWithoutContent = append(filesWithoutContent, fileWithoutContent)
+	}
+
+	// Recursively convert sub-directories
+	subDirsWithoutContent := make([]*FolderWithoutFileContent, 0, len(folder.SubDirs))
+	for _, subDir := range folder.SubDirs {
+		subDirWithoutContent := subDir.ToFolderWithoutFileContent()
+		subDirsWithoutContent = append(subDirsWithoutContent, &subDirWithoutContent)
+	}
+
+	return FolderWithoutFileContent{
+		Name:    folder.Name,
+		Id:      folder.Id,
+		Files:   filesWithoutContent,
+		SubDirs: subDirsWithoutContent,
+	}
+}
+
+type FolderWithoutFileContent struct {
+	Name    string                      `json:"name"`
+	Id      string                      `json:"id"`
+	Files   []*FileWithoutContent       `json:"files"`
+	SubDirs []*FolderWithoutFileContent `json:"subDirs"`
+}
+
 func (f *Folder) AddFile(file *File) *Folder {
 	f.Files = append(f.Files, file)
 	return f

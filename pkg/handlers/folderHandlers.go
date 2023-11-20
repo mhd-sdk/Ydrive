@@ -29,7 +29,7 @@ func CreateFolderHandler(c *fiber.Ctx) error {
 		"createdFolder": created,
 		"msg":           "folder created successfully",
 	}
-	arborescenceBroadCast(filesystemmanager.RootFolder)
+	arborescenceBroadCast(filesystemmanager.RootFolder.ToFolderWithoutFileContent())
 	c.Status(201)
 	return c.JSON(returned)
 }
@@ -51,7 +51,7 @@ func EditFolderNameHandler(c *fiber.Ctx) error {
 		c.Status(400)
 		return c.JSON(fiber.Map{"error": err.Error()})
 	}
-	arborescenceBroadCast(filesystemmanager.RootFolder)
+	arborescenceBroadCast(filesystemmanager.RootFolder.ToFolderWithoutFileContent())
 	returned := fiber.Map{
 		"editedFile": edited,
 		"msg":        "file edited successfully",

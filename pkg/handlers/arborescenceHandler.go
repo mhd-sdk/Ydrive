@@ -36,6 +36,7 @@ func ArborescenceWsHandler(c *websocket.Conn) {
 		if err != nil {
 			return
 		}
-		c.WriteJSON(filesystemmanager.RootFolder)
+		rootFolder := filesystemmanager.RootFolder.ToFolderWithoutFileContent()
+		c.WriteJSON(rootFolder)
 	}
 }

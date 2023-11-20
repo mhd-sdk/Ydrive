@@ -2,7 +2,6 @@ package filesystemmanager
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/mehdiseddik.com/pkg/models"
@@ -47,7 +46,6 @@ func CreateFile(name string, parentFolderId string) (*models.File, error) {
 func FindFileById(id string) (*models.File, error) {
 	found, error := RootFolder.FindFileById(id)
 	if error != nil {
-		fmt.Println(error)
 		return nil, error
 	}
 	return found, nil
@@ -113,11 +111,8 @@ func MoveFile(fileId string, folderId string) (*models.File, error) {
 	if foundFolder == nil {
 		return nil, errors.New("folder not found")
 	}
-	fmt.Println("Mooving file:" + foundFile.Name + " to folder:" + foundFolder.Name)
-	fmt.Println("searching parent folder for file with id:" + fileId)
 	oldParentFolder := RootFolder.GetFileParentFolder(fileId)
 
-	fmt.Print("Parent folder of the file " + foundFile.Name + " is " + oldParentFolder.Name)
 	foundFolder.AddFile(foundFile)
 	err = oldParentFolder.RemoveFile(foundFile.Id) // probleme
 	if err != nil {

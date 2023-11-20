@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	"sync"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -11,6 +11,8 @@ import (
 
 // fiber websocket mamager for writeFile handler
 var WriteFileClients = make(map[*websocket.Conn]bool)
+
+var mu sync.Mutex
 
 // RegisterWriteFile a new client
 func RegisterWriteFile(c *websocket.Conn) {
@@ -25,7 +27,7 @@ func UnregisterWriteFile(c *websocket.Conn) {
 
 // WriteFileBroadCast a message to all clients
 func WriteFileBroadCast(message interface{}) {
-	for client := range ArborescenceClients {
+	for client := range WriteFileClients {
 		client.WriteJSON(message)
 	}
 }
@@ -49,7 +51,7 @@ func CreateFileHandler(c *fiber.Ctx) error {
 		c.Status(400)
 		return c.JSON(fiber.Map{"error": err.Error()})
 	}
-	arborescenceBroadCast(filesystemmanager.RootFolder)
+	arborescenceBroadCast(filesystemmanager.RootFolder.ToFolderWithoutFileContent())
 	returned := fiber.Map{
 		"createdFile": created,
 		"msg":         "file created successfully",
@@ -64,7 +66,6 @@ type EditFileRequest struct {
 
 func TestHandler(c *fiber.Ctx) error {
 	var param string = c.Params("id")
-	fmt.Println("param: " + param)
 	return c.JSON(fiber.Map{"msg": param})
 }
 
@@ -75,13 +76,15 @@ func EditFileNameHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	mu.Lock()
 	fileName := body.Name
 	edited, err := filesystemmanager.UpdateFileName(fileId, fileName)
+	mu.Unlock()
 	if err != nil {
 		c.Status(400)
 		return c.JSON(fiber.Map{"error": err.Error()})
 	}
-	arborescenceBroadCast(filesystemmanager.RootFolder)
+	arborescenceBroadCast(filesystemmanager.RootFolder.ToFolderWithoutFileContent())
 	returned := fiber.Map{
 		"editedFile": edited,
 		"msg":        "file edited successfully",
@@ -103,12 +106,14 @@ func MoveFileHandler(c *fiber.Ctx) error {
 	}
 	fileId := body.FileId
 	folderId := body.FolderId
+	mu.Lock()
 	moved, err := filesystemmanager.MoveFile(fileId, folderId)
+	mu.Unlock()
 	if err != nil {
 		c.Status(400)
 		return c.JSON(fiber.Map{"error": err.Error()})
 	}
-	arborescenceBroadCast(filesystemmanager.RootFolder)
+	arborescenceBroadCast(filesystemmanager.RootFolder.ToFolderWithoutFileContent())
 	returned := fiber.Map{
 		"movedFile": moved,
 		"msg":       "file moved successfully",
@@ -124,7 +129,7 @@ func DeleteFileHandler(c *fiber.Ctx) error {
 		c.Status(400)
 		return c.JSON(fiber.Map{"error": err.Error()})
 	}
-	arborescenceBroadCast(filesystemmanager.RootFolder)
+	arborescenceBroadCast(filesystemmanager.RootFolder.ToFolderWithoutFileContent())
 	returned := fiber.Map{
 		"msg": "file deleted successfully",
 	}
@@ -136,7 +141,10 @@ func WriteFileContentWsHandler(c *websocket.Conn) {
 	defer UnregisterWriteFile(c)
 	RegisterWriteFile(c)
 	fileId := c.Params("fileId")
+	mu.Lock()
 	file, err := filesystemmanager.FindFileById(fileId)
+	mu.Unlock()
+
 	if err != nil {
 		c.WriteJSON(fiber.Map{"error": err.Error()})
 		return
@@ -148,6 +156,6 @@ func WriteFileContentWsHandler(c *websocket.Conn) {
 			return
 		}
 		file.Content = string(msg)
-		WriteFileBroadCast(filesystemmanager.RootFolder)
+		WriteFileBroadCast(file.Content)
 	}
 }
